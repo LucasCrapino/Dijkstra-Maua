@@ -1,42 +1,80 @@
 import java.util.*;
 
 public class Graph {
-    private Map<String, List<Edge>> adjList = new HashMap<>();
-    
-    public void addEdge(String source, String destination, int weight) {
-        adjList.putIfAbsent(source, new ArrayList<>());
-        adjList.putIfAbsent(destination, new ArrayList<>());
-        adjList.get(source).add(new Edge(destination, weight));
-        adjList.get(destination).add(new Edge(source, weight));
+    private final int[][] adjMatrix;
+    private final String[] locations;
+    private final int numLocations;
+
+    public Graph(String[] locations) {
+        this.numLocations = locations.length;
+        this.locations = locations;
+        this.adjMatrix = new int[numLocations][numLocations];
+        
+        for (int i = 0; i < numLocations; i++) {
+            Arrays.fill(adjMatrix[i], Integer.MAX_VALUE);
+            adjMatrix[i][i] = 0;
+        }
     }
 
-    public Map<String,Integer> dijkstra(String start){
-        Map<String, Integer> distances = new HashMap<>();
-        PriorityQueue<Edge> minHeap = new PriorityQueue<>(Comparator.comparingInt(edge -> edge.weight));
+    public void addEdge(int source, int destination, int weight) {
+        adjMatrix[source][destination] = weight;
+        adjMatrix[destination][source] = weight;
+    }
 
-        for(String vertex : adjList.keySet()){
-            distances.put(vertex, Integer.MAX_VALUE);
+    public int[] dijkstra(int start) {
+        int[] distances = new int[numLocations];
+        boolean[] visited = new boolean[numLocations];
+
+        Arrays.fill(distances, Integer.MAX_VALUE);
+        distances[start] = 0;
+
+        for (int i = 0; i < numLocations - 1; i++) {
+            int u = minDistance(distances, visited);
+            visited[u] = true;
+
+            for (int v = 0; v < numLocations; v++) {
+                if (!visited[v] && adjMatrix[u][v] != Integer.MAX_VALUE && distances[u] != Integer.MAX_VALUE &&
+                    distances[u] + adjMatrix[u][v] < distances[v]) {
+                    distances[v] = distances[u] + adjMatrix[u][v];
+                }
+            }
         }
+        return distances;
+    }
 
-        distances.put(start,0);
+    private int minDistance(int[] distances, boolean[] visited) {
+        int min = Integer.MAX_VALUE;
+        int minIndex = -1;
 
-        minHeap.add(new Edge(start,0));
+        for (int v = 0; v < numLocations; v++) {
+            if (!visited[v] && distances[v] <= min) {
+                min = distances[v];
+                minIndex = v;
+            }
+        }
+        return minIndex;
+    }
 
-        while(!minHeap.isEmpty()){
-            Edge current = minHeap.poll();
-            String u = current.destination;
+    public List<String> findShortestPath(int start, int end) {
+        int[] distances = dijkstra(start);
+        List<String> path = new ArrayList<>();
 
-            for(Edge edge : adjList.get(u)){
-                String v = edge.destination;
-                int newDist = distances.get(u) + edge.weight;
+        if (distances[end] == Integer.MAX_VALUE) return path;
 
-                if (newDist < distances.get(v)) {
-                    distances.put(v, newDist);
-                    minHeap.add(new Edge(v, newDist));
+        int current = end;
+        path.add(locations[current]);
+
+        while (current != start) {
+            for (int i = 0; i < numLocations; i++) {
+                if (adjMatrix[i][current] != Integer.MAX_VALUE && distances[current] - adjMatrix[i][current] == distances[i]) {
+                    path.add(locations[i]);
+                    current = i;
+                    break;
                 }
             }
         }
 
-        return distances;
+        Collections.reverse(path);
+        return path;
     }
 }
