@@ -17,11 +17,15 @@ public class Graph {
     }
 
     public void addEdge(int source, int destination, int weight) {
-        adjMatrix[source][destination] = weight;
-        adjMatrix[destination][source] = weight;
+        if (source >= 0 && source < numLocations && destination >= 0 && destination < numLocations) {
+            adjMatrix[source][destination] = weight;
+            adjMatrix[destination][source] = weight;
+        } else {
+            System.out.println("Erro: Índice de localização inválido.");
+        }
     }
 
-    public int[] dijkstra(int start) {
+    private void dijkstra(int start, int[] predecessors) {
         int[] distances = new int[numLocations];
         boolean[] visited = new boolean[numLocations];
 
@@ -36,10 +40,10 @@ public class Graph {
                 if (!visited[v] && adjMatrix[u][v] != Integer.MAX_VALUE && distances[u] != Integer.MAX_VALUE &&
                     distances[u] + adjMatrix[u][v] < distances[v]) {
                     distances[v] = distances[u] + adjMatrix[u][v];
+                    predecessors[v] = u;
                 }
             }
         }
-        return distances;
     }
 
     private int minDistance(int[] distances, boolean[] visited) {
@@ -56,25 +60,21 @@ public class Graph {
     }
 
     public List<String> findShortestPath(int start, int end) {
-        int[] distances = dijkstra(start);
+        if (start < 0 || start >= numLocations || end < 0 || end >= numLocations) {
+            System.out.println("Erro: Índice de localização inválido.");
+            return Collections.emptyList();
+        }
+
+        int[] predecessors = new int[numLocations];
+        Arrays.fill(predecessors, -1);
+        dijkstra(start, predecessors);
+        
         List<String> path = new ArrayList<>();
-
-        if (distances[end] == Integer.MAX_VALUE) return path;
-
-        int current = end;
-        path.add(locations[current]);
-
-        while (current != start) {
-            for (int i = 0; i < numLocations; i++) {
-                if (adjMatrix[i][current] != Integer.MAX_VALUE && distances[current] - adjMatrix[i][current] == distances[i]) {
-                    path.add(locations[i]);
-                    current = i;
-                    break;
-                }
-            }
+        for (int at = end; at != -1; at = predecessors[at]) {
+            path.add(locations[at]);
         }
 
         Collections.reverse(path);
-        return path;
+        return path.get(0).equals(locations[start]) ? path : Collections.emptyList();
     }
 }
