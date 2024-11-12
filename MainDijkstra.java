@@ -32,7 +32,7 @@ public class MainDijkstra {
         graph.addEdge(10, 14, 5);
         graph.addEdge(13, 8, 3);
         graph.addEdge(12, 10, 9);
-    
+        
         List<String> shortestPath = graph.findShortestPath(0, 14);
         System.out.println("Caminho mais curto de Casa até o IMT: " + shortestPath);
     }    
